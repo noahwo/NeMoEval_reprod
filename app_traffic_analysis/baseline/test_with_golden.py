@@ -16,6 +16,7 @@ import re
 import time
 import sys
 import numpy as np
+from sklearn.cluster import KMeans
 
 # Load environ variables from .env, will not override existing environ variables
 load_dotenv()
@@ -112,27 +113,19 @@ def userQuery(prompt_list, graph_json):
             else:
                 json_string = "{" + llm_answer + "}"
 
+            if "//" in json_string:
+                import re
+
+                pattern = r"// .*?\n"
+                json_string_copy = re.sub(pattern, "\n", json_string)
+                json_string = json_string_copy
             try:
                 ret = json.loads(json_string)
             except Exception as e:
-                pass
-            try:
                 str1 = json_string.split("'''")[0] + "}"
                 str2 = json_string.split("'''")[1][:-1]
                 ret = json.loads(str1)
                 ret["text"] = str2
-            except Exception as e2:
-                try:
-                    import re
-
-                    pattern = r"// .*?\""
-                    cleaned_text = re.sub(pattern, '"', json_string)
-                    ret = json.loads(cleaned_text)
-                except Exception as e3:
-                    str1 = cleaned_text.split("'''")[0] + "}"
-                    str2 = cleaned_text.split("'''")[1][:-1]
-                    ret = json.loads(str1)
-                    ret["text"] = str2
 
             if ret["type"] == "graph":
                 if '"' in ret["data"]:
@@ -302,14 +295,14 @@ def main():
     # "Calculate the total byte weight of edges incident on each node, use kmeans clustering to cluster the total byte weights into 5 clusters, apply the cluster labels as strings to the nodes and pick and assign colors to the nodes based on their cluster labels. Shape the data correctly using numpy before passing it to kmeans. Return the networkx graph object.",
     # 8 hard ones
     # "How many maximal cliques are in the graph? Return only the number.",
+    # "Color the nodes to reflect a heatmap based on the total byte weight of the edges. Return the networkx graph object.",
+    # "Bisect the network such that the number of nodes on either side of the cut is equal. Color the graph based on the bisection. Return the networkx graph object.",
+    #  "Calculate the total byte weight of edges incident on each node, use kmeans clustering to cluster the total byte weights into 5 clusters. Return the networkx graph object.",
+    #  "How many unique nodes have edges to nodes with label app:prod and doesn't contain the label app:prod? Return only the number.",
+    #  "Show me the unique IP address prefix and the number of nodes per prefix. Return a table without headers.",
+    #  "Delete all edges whose byte weight is less than the median byte weight in the whole graph without using the statistics library. Make sure to compute the median and not the mean. Return the networkx graph object.",
     # TODO: replace here by auto-loading from a Json data
     prompt_list = [
-        "Color the nodes to reflect a heatmap based on the total byte weight of the edges. Return the networkx graph object.",
-        "Bisect the network such that the number of nodes on either side of the cut is equal. Color the graph based on the bisection. Return the networkx graph object.",
-        "Calculate the total byte weight of edges incident on each node, use kmeans clustering to cluster the total byte weights into 5 clusters. Return the networkx graph object.",
-        "How many unique nodes have edges to nodes with label app:prod and doesn't contain the label app:prod? Return only the number.",
-        "Show me the unique IP address prefix and the number of nodes per prefix. Return a table without headers.",
-        "Delete all edges whose byte weight is less than the median byte weight in the whole graph without using the statistics library. Make sure to compute the median and not the mean. Return the networkx graph object.",
         "What is the average byte weight and connection weight of edges incident on nodes with labels app:prod? Return a table with header 'Average byte weight', 'Average connection weight' on the first row.",
     ]
     userQuery(prompt_list, graph_json)

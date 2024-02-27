@@ -1,9 +1,10 @@
 ## Issue: cannot solve the 8th of medium ones
 
-1. Code not interpretable: KMeans is not defined (or Kmeans?)
-2. LLM answer is unhelpful text
+- [x] Code not interpretable: KMeans is not defined (or Kmeans?)
+- [ ] LLM answer is unhelpful text
 
-**Fix**: Not try yet, focus on the following ones.
+**Fix**: KMeans lib issue solved by adding `from sklearn.cluster import KMeans
+` on top of `test_with_golden.py`. Outputs waits for further try.
 
 **Error**:
 
