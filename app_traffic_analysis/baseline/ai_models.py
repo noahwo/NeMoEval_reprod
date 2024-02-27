@@ -26,8 +26,7 @@ load_dotenv()
 
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_KEY = "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"
-# OPENAI_API_KEY = "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"
+
 
 # For GPT in Azure
 # llm = AzureChatOpenAI(
