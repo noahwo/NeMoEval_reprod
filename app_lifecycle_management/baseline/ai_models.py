@@ -13,36 +13,38 @@ from langchain import OpenAI, PromptTemplate, FewShotPromptTemplate
 from langchain.chains import LLMChain, LLMMathChain, TransformChain, SequentialChain
 from langchain.callbacks import get_openai_callback
 from langchain.agents import ZeroShotAgent, Tool, AgentExecutor, load_tools
+
 # For Azure GPT keys
 from langchain.chat_models import AzureChatOpenAI
+
 # For non-Azure keys
 from langchain.llms import OpenAI
 
 # Load environ variables from .env, will not override existing environ variables
 load_dotenv()
 
-OPENAI_API_BASE = os.getenv('OPENAI_API_BASE')
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # For GPT in Azure
-llm = AzureChatOpenAI(
-    openai_api_type='azure',
-    openai_api_base=OPENAI_API_BASE,
-    openai_api_version="2023-05-15",
-    deployment_name='gpt-4-32k',
-    model_name='gpt-4-32k',
-    openai_api_key=OPENAI_API_KEY,
-    temperature=0,
-    max_tokens=4000,
-    )
+# llm = AzureChatOpenAI(
+#     openai_api_type='azure',
+#     openai_api_base=OPENAI_API_BASE,
+#     openai_api_version="2023-05-15",
+#     deployment_name='gpt-4-32k',
+#     model_name='gpt-4-32k',
+#     openai_api_key=OPENAI_API_KEY,
+#     temperature=0,
+#     max_tokens=4000,
+#     )
 
 # Without Azure key
-# llm = OpenAI(
-#     model_name='text-davinci-003',
-#     temperature=0,
-#     max_tokens=2048,
-#     openai_api_key=OPENAI_API_KEY
-#     )
+llm = OpenAI(
+    model_name="gpt-4-0125-preview",
+    temperature=0,
+    max_tokens=4096,
+    openai_api_key=OPENAI_API_KEY,
+)
 
 
 prefix = """
@@ -68,21 +70,18 @@ Answer:
 Question: {input}
 """
 
-prompt = PromptTemplate(
-    input_variables=["input"],
-    template=prefix+suffix
-)
+prompt = PromptTemplate(input_variables=["input"], template=prefix + suffix)
 
 
 pyGraphNetExplorer = LLMChain(llm=llm, prompt=prompt)
 
+
 def count_tokens(chain, query):
     with get_openai_callback() as cb:
         result = chain.run(query)
-        print(f'Spent a total of {cb.total_tokens} tokens')
+        print(f"Spent a total of {cb.total_tokens} tokens")
 
     return cb.total_tokens
 
 
 llm_input_token_count = count_tokens(pyGraphNetExplorer, query=prompt)
-
