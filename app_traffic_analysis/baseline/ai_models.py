@@ -9,17 +9,21 @@ import pandas as pd
 import inspect
 import re
 
-from langchain import OpenAI, PromptTemplate, FewShotPromptTemplate
-from langchain.chains import LLMChain, LLMMathChain, TransformChain, SequentialChain
-from langchain.callbacks import get_openai_callback
+from langchain.chains import LLMChain
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.agents import ZeroShotAgent, Tool, AgentExecutor, load_tools
 
-# For Azure GPT keys
-from langchain.chat_models import AzureChatOpenAI
+from langchain_community.llms import OpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import FewShotPromptTemplate
+from langchain_community.callbacks import get_openai_callback
+from langchain_community.chat_models import AzureChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 
-# For non-Azure keys
-from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOllama
+from langchain_community.llms import Ollama
+
 
 # Load environ variables from .env, will not override existing environ variables
 load_dotenv()
@@ -41,12 +45,14 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 #     )
 
 # Without Azure key
-llm = ChatOpenAI(
-    model_name="gpt-4-0125-preview",
-    temperature=0,
-    max_tokens=4096,
-    openai_api_key=OPENAI_API_KEY,
-)
+# llm = ChatOpenAI(
+#     model_name="gpt-4-0125-preview",
+#     temperature=0,
+#     max_tokens=4096,
+#     openai_api_key=OPENAI_API_KEY,
+# )
+
+# llm = Ollama(model="llama2:13b")
 
 
 prefix = """
@@ -76,15 +82,18 @@ Answer:
 Question: {input}
 """
 
+llm = Ollama(
+    model="llama2:13b",
+)
+
 prompt = PromptTemplate(input_variables=["input"], template=prefix + suffix)
 
-
-pyGraphNetExplorer = LLMChain(llm=llm, prompt=prompt)
+pyGraphNetExplorer = LLMChain(llm=llm, prompt=prompt, verbose=True)
 
 
 def count_tokens(chain, query):
     with get_openai_callback() as cb:
-        result = chain.run(query)
+        result = chain.invoke(query)
         print(f"Spent a total of {cb.total_tokens} tokens")
 
     return cb.total_tokens

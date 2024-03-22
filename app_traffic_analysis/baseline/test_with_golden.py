@@ -10,7 +10,7 @@ import jsonlines
 import random
 from mock_graph_data import generate_mock_graph
 from networkx.readwrite import json_graph
-from langchain.callbacks import get_openai_callback
+from langchain_community.callbacks import get_openai_callback
 import json
 import re
 import time
@@ -21,9 +21,10 @@ from sklearn.cluster import KMeans
 # Load environ variables from .env, will not override existing environ variables
 load_dotenv()
 
+PATH_PREFIX = os.getcwd() + "/app_traffic_analysis/"
 EACH_PROMPT_RUN_TIME = 1
-OUTPUT_JSONL_PATH = "logs/node10_log.jsonl"
-GRAPH_PATH = "../data/graph_data/node10.json"
+OUTPUT_JSONL_PATH = PATH_PREFIX + "baseline/logs/node10_log.jsonl"
+GRAPH_PATH = PATH_PREFIX + "data/graph_data/node10.json"
 
 
 def count_tokens(chain, query):
@@ -56,7 +57,7 @@ def node_attributes_are_equal(node1_attrs, node2_attrs):
 
 def userQuery(prompt_list, graph_json):
     # Load the existing prompt and golden answers from Json
-    golden_answer_filename = "../data/prompt_golden_ans.json"
+    golden_answer_filename = PATH_PREFIX + "data/prompt_golden_ans.json"
     with open(golden_answer_filename, "r") as f:
         allAnswer = json.load(f)
 
@@ -71,7 +72,6 @@ def userQuery(prompt_list, graph_json):
             + each_prompt
         )
         requestData = {"llm-prompt": with_graph_prompt, "original-prompt": each_prompt}
-        # print(requestData)
         prompt_accu = 0
 
         # Reset ret when it's a new test
@@ -96,6 +96,7 @@ def userQuery(prompt_list, graph_json):
 
             print("Calling model")
             answer = pyGraphNetExplorer.run(requestData["llm-prompt"])
+            print(requestData["llm-prompt"])
             llm_output_token_count = count_tokens(pyGraphNetExplorer, answer)
             print("model returned")
 
@@ -266,6 +267,8 @@ def ground_truth_check_accu(
 
 def main():
 
+    # print the current working directory
+    print("Current working directory: ", os.getcwd())
     # create 'output.jsonl' file if it does not exist
     if not os.path.exists(OUTPUT_JSONL_PATH):
         with open(OUTPUT_JSONL_PATH, "w") as f:
@@ -275,9 +278,7 @@ def main():
 
     """
     Comment out easy ones to save tokens"""
-    #  # 8 easy ones
-    #     "How many nodes are in the graph? Return only the number.",
-    #     "How many nodes and edges are in the graph? Return a list.",
+
     #     "Add a label app:prod to nodes with address prefix 15.76 and add the label app:test to nodes with address prefix 149.196. Return the networkx graph object.",
     #     "Show me the unique labels and the number of nodes per label. Return a table with header 'Label', 'Number of Nodes' on the first row.",
     #     "Remove the label 'type=VM' from all the nodes. Return the networkx graph object.",
@@ -301,9 +302,12 @@ def main():
     #  "How many unique nodes have edges to nodes with label app:prod and doesn't contain the label app:prod? Return only the number.",
     #  "Show me the unique IP address prefix and the number of nodes per prefix. Return a table without headers.",
     #  "Delete all edges whose byte weight is less than the median byte weight in the whole graph without using the statistics library. Make sure to compute the median and not the mean. Return the networkx graph object.",
+    # "What is the average byte weight and connection weight of edges incident on nodes with labels app:prod? Return a table with header 'Average byte weight', 'Average connection weight' on the first row.",
     # TODO: replace here by auto-loading from a Json data
     prompt_list = [
-        "What is the average byte weight and connection weight of edges incident on nodes with labels app:prod? Return a table with header 'Average byte weight', 'Average connection weight' on the first row.",
+        #  # 8 easy ones
+        "How many nodes are in the graph? Return only the number.",
+        "How many nodes and edges are in the graph? Return a list.",
     ]
     userQuery(prompt_list, graph_json)
 
